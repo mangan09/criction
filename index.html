@@ -3,86 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Criction by Mangan</title>
+  <title>Criction - Secure Access</title>
   <style>
-    /* Reset and base styles */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
       background: #f5f7fa;
       color: #333;
       text-align: center;
     }
-
-    /* Header banner */
     header {
       background: linear-gradient(135deg, #007BFF, #00c6ff);
       color: white;
-      padding: 60px 20px;
+      padding: 50px 20px;
     }
     header h1 {
-      font-size: 2.8em;
-      margin-bottom: 10px;
+      font-size: 3em;
+      margin: 0;
     }
     header p {
       font-size: 1.2em;
+      margin-top: 10px;
     }
-
-    /* Main section */
     main {
       padding: 40px 20px;
     }
     main h2 {
       font-size: 2em;
-      margin-bottom: 15px;
-    }
-    main p {
-      font-size: 1.1em;
       margin-bottom: 20px;
     }
-
-    /* Button */
-    a.button {
-      display: inline-block;
-      padding: 14px 28px;
-      margin-top: 10px;
+    input[type="password"] {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 250px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 12px 24px;
       background: #007BFF;
       color: white;
-      text-decoration: none;
+      border: none;
       border-radius: 8px;
-      font-size: 18px;
+      font-size: 16px;
+      cursor: pointer;
       transition: background 0.3s, transform 0.2s;
     }
-    a.button:hover {
+    button:hover {
       background: #0056b3;
       transform: scale(1.05);
     }
-
-    /* Footer */
     footer {
       margin-top: 50px;
       padding: 15px;
       background: #222;
       color: #ccc;
       font-size: 14px;
-    }
-
-    /* Responsive tweaks */
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 2.2em;
-      }
-      main h2 {
-        font-size: 1.6em;
-      }
-      a.button {
-        font-size: 16px;
-        padding: 12px 20px;
-      }
     }
   </style>
 </head>
@@ -93,19 +70,32 @@
     <p>The hassle-free way to run your cricket auction</p>
   </header>
 
-  <!-- Main -->
+  <!-- Main Content -->
   <main>
-    <h2>Welcome!</h2>
-    <p>Click below to explore the cricket auction app:</p>
+    <h2>🔒 Secure Access</h2>
+    <p>Please enter your access code (provided after payment):</p>
 
-    <a href="crictionbymangan.html" target="_blank" rel="noopener" class="button">
-      Open Auction Page
-    </a>
+    <input type="password" id="pass" placeholder="Enter Password">
+    <br>
+    <button onclick="checkPassword()">Unlock Auction</button>
   </main>
 
   <!-- Footer -->
   <footer>
     Made with ❤️ by <strong>Mangan Ray</strong>
   </footer>
+
+  <script>
+    function checkPassword() {
+      const password = document.getElementById("pass").value;
+      const correctPassword = "python123"; // 👉 Change this password!
+
+      if (password === correctPassword) {
+        window.location.href = "crictionbymangan.html";
+      } else {
+        alert("❌ Wrong password. Contact admin for access.");
+      }
+    }
+  </script>
 </body>
 </html>
