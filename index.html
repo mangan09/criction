@@ -91,6 +91,9 @@
       const correctPassword = "python123"; // 👉 Change this password!
 
       if (password === correctPassword) {
+        // Save flag in localStorage
+        localStorage.setItem("authenticated", "true");
+        // Redirect to auction page
         window.location.href = "crictionbymangan.html";
       } else {
         alert("❌ Wrong password. Contact admin for access.");
