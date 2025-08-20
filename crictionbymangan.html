@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+  // Check if user is authenticated
+  if (localStorage.getItem("authenticated") !== "true") {
+    alert("❌ Unauthorized access! Please login first.");
+    window.location.href = "index.html"; // redirect back
+  }
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRICTION (Full Admin Control)</title>
@@ -328,3 +335,4 @@
     <script src="https://unpkg.com/jspdf-autotable"></script>
 </body>
 </html>
+
