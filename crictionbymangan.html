@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRICTION (Full Admin Control)</title>
+    <title>CRICTION - Modern Auction</title>
     <script>
   // Check if user is authenticated
   if (localStorage.getItem("authenticated") !== "true") {
@@ -17,336 +17,1027 @@
     <script src="https://unpkg.com/jspdf-autotable"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; overflow-x: hidden; }
-        .glass-card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(51, 65, 85, 0.5); }
-        .player-card-enter { animation: slideIn 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(50px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .sold-banner { animation: zoomInStamp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes zoomInStamp { from { opacity: 0; transform: scale(0.3) rotate(-15deg); } to { opacity: 1; transform: scale(1) rotate(2deg); } }
-        .bid-update { animation: popIn 0.3s ease; }
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-        .confetti { position: absolute; width: 10px; height: 10px; background-color: #facc15; opacity: 0.8; border-radius: 50%; animation: fall 3s linear forwards; }
-        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
-        .btn-grad { background-image: linear-gradient(to right, #4f46e5 0%, #c026d3 51%, #4f46e5 100%); background-size: 200% auto; transition: 0.5s; }
-        .btn-grad:hover { background-position: right center; }
-        .modal { display: none; }
-        .modal.active { display: flex; }
+        :root {
+            --bg-light: #f1f5f9;
+            --bg-dark: #0f172a; /* Slightly darker bg */
+            --card-light: rgba(255, 255, 255, 0.8);
+            --card-dark: rgba(30, 41, 59, 0.6); /* More translucent */
+            --text-light: #0f172a;
+            --text-dark: #e2e8f0;
+            --primary: #3b82f6;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+        }
+
+        html.dark {
+            --bg-main: var(--bg-dark);
+            --card-main: var(--card-dark);
+            --text-main: var(--text-dark);
+            --text-muted: #94a3b8;
+        }
+
+        html.light {
+            --bg-main: var(--bg-light);
+            --card-main: var(--card-light);
+            --text-main: var(--text-light);
+            --text-muted: #475569;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: var(--card-main);
+            backdrop-filter: blur(16px); /* Increased blur */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.3s, transform 0.2s ease-out;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        html.light .glass-card {
+             box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.07);
+             border: 1px solid #e2e8f0;
+        }
+
+        .btn-primary {
+            background-image: linear-gradient(to right, var(--primary) 0%, var(--secondary) 100%);
+            transition: all 0.4s ease;
+            background-size: 200% auto;
+            box-shadow: 0 4px 15px 0 rgba(59, 130, 246, 0.3);
+        }
+        .btn-primary:hover {
+            background-position: right center;
+            box-shadow: 0 6px 20px 0 rgba(236, 72, 153, 0.4);
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .slide-in-up { animation: slideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Modal styles */
+        .modal-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-container.active {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-container.active .modal-content {
+            transform: scale(1);
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 bg-slate-900">
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <!-- Theme Switcher -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="theme-switcher" class="p-2 rounded-full bg-slate-700/50 dark:bg-slate-200/20 text-white dark:text-slate-800 backdrop-blur-sm">
+            <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+        </button>
+    </div>
 
     <div id="app" class="w-full max-w-7xl mx-auto">
-        <header class="text-center mb-6">
-            <h1 class="text-4xl md:text-6xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">CRICTION</h1>
-            <p class="text-slate-400 text-lg">By Mangan Ray</p>
-            <div id="current-auction-info" class="text-center text-amber-300 font-semibold mt-2"></div>
+        <header class="text-center mb-8 fade-in">
+            <!-- Responsive font size for the main title -->
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-500">CRICTION</h1>
+            <p class="text-lg" style="color: var(--text-muted);">DEVELOPED BY MANGAN</p>
+            <div id="current-auction-info" class="text-center text-amber-400 font-semibold mt-3 h-6"></div>
             <button id="main-menu-btn" class="hidden mt-4 bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm">Back to Main Menu</button>
         </header>
 
-        <section id="landing-section" class="glass-card p-6 rounded-2xl">
+        <main id="view-container">
+            <!-- Views will be dynamically rendered here -->
+        </main>
+    </div>
+
+    <!-- Templates for different views -->
+    <template id="landing-template">
+        <section class="glass-card p-6 sm:p-8 rounded-2xl slide-in-up">
             <h2 class="text-3xl font-bold text-center mb-6">Auction Hub</h2>
-            <div class="text-center mb-6">
-                <button id="create-new-auction-btn" class="btn-grad text-white font-bold py-3 px-8 rounded-lg shadow-lg text-xl">Create New Auction</button>
+            <div class="text-center mb-8">
+                <button id="create-new-auction-btn" class="btn-primary text-white font-bold py-3 px-8 rounded-full shadow-lg text-xl transform hover:scale-105 transition-transform">Create New Auction</button>
             </div>
             <div>
-                <h3 class="text-xl font-semibold mb-3 text-center border-b border-slate-700 pb-2">Previous Auctions</h3>
-                <div id="previous-auctions-list" class="mt-4 space-y-3 max-h-96 overflow-y-auto">
+                <h3 class="text-xl font-semibold mb-4 text-center border-b border-slate-700 dark:border-slate-700 pb-2">Previous Auctions</h3>
+                <div id="previous-auctions-list" class="mt-4 space-y-3 max-h-96 overflow-y-auto p-1">
                     <!-- Previous auctions will be loaded here -->
                 </div>
             </div>
         </section>
+    </template>
 
-        <section id="setup-section" class="hidden glass-card p-6 rounded-2xl">
-            <h2 class="text-3xl font-bold text-center mb-6">Auction Setup</h2>
+    <template id="setup-template">
+        <section class="glass-card p-6 sm:p-8 rounded-2xl slide-in-up">
+            <h2 class="text-3xl font-bold text-center mb-8">Auction Setup</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <h3 class="text-xl font-semibold mb-3">Add Teams</h3>
+                <!-- Add Teams Column -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold">Add Teams</h3>
                     <form id="add-team-form" class="space-y-3">
-                        <input type="text" id="team-name" placeholder="Team Name" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-yellow-400" required>
-                        <input type="number" id="team-purse" placeholder="Purse (in Points)" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-yellow-400" required>
-                        <div>
-                            <label class="text-sm text-slate-400">Team Logo (Optional)</label>
-                            <input type="file" id="team-logo-input" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Add Team</button>
+                        <input type="text" id="team-name" placeholder="Team Name" class="w-full bg-slate-700/50 dark:bg-slate-800 p-3 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary" required>
+                        <input type="number" id="team-purse" placeholder="Purse (in Points)" class="w-full bg-slate-700/50 dark:bg-slate-800 p-3 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-primary" required>
+                        <input type="file" id="team-logo-input" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-100 file:text-violet-700 hover:file:bg-violet-200 cursor-pointer">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-md transition-colors">Add Team</button>
                     </form>
-                    <div id="setup-teams-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
+                    <div id="setup-teams-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto p-1"></div>
                 </div>
-                <div>
-                    <h3 class="text-xl font-semibold mb-3">Add Players</h3>
+                <!-- Add Players Column -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold">Add Players</h3>
                     <form id="add-player-form" class="space-y-3">
-                        <input type="text" id="player-name-input" placeholder="Player Name" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required>
-                        <select id="player-specialty-input" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required><option value="" disabled selected>Choose Specialty</option><option value="Batsman">Batsman</option><option value="Bowler">Bowler</option><option value="All-rounder">All-rounder</option></select>
+                        <input type="text" id="player-name-input" placeholder="Player Name" class="w-full bg-slate-700/50 dark:bg-slate-800 p-3 rounded-md border border-slate-600" required>
+                        <select id="player-specialty-input" class="w-full bg-slate-700/50 dark:bg-slate-800 p-3 rounded-md border border-slate-600" required><option value="" disabled selected>Choose Specialty</option><option value="Batsman">Batsman</option><option value="Bowler">Bowler</option><option value="All-rounder">All-rounder</option></select>
                         <div class="flex items-center space-x-4 text-slate-400">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="player-is-wicketkeeper-input" class="w-4 h-4 text-violet-600 bg-gray-700 border-gray-600 rounded focus:ring-violet-500">
-                                <label for="player-is-wicketkeeper-input">Is Wicketkeeper?</label>
-                            </div>
-                             <div class="flex items-center space-x-2">
-                                <input type="checkbox" id="player-is-captain-input" class="w-4 h-4 text-violet-600 bg-gray-700 border-gray-600 rounded focus:ring-violet-500">
-                                <label for="player-is-captain-input">Is Captain?</label>
-                            </div>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" id="player-is-wicketkeeper-input" class="w-4 h-4 text-pink-500 bg-gray-700 border-gray-600 rounded focus:ring-pink-600"><span>Wicketkeeper?</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" id="player-is-captain-input" class="w-4 h-4 text-pink-500 bg-gray-700 border-gray-600 rounded focus:ring-pink-600"><span>Captain?</span></label>
                         </div>
-                        <input type="number" id="player-base-price-input" placeholder="Base Price (in Points)" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required>
-                        <div><label class="text-sm text-slate-400">Player Photo (Optional)</label><input type="file" id="player-photo-input" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"></div>
-                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Add Player</button>
+                        <input type="number" id="player-base-price-input" placeholder="Base Price (in Points)" class="w-full bg-slate-700/50 dark:bg-slate-800 p-3 rounded-md border border-slate-600" required>
+                        <input type="file" id="player-photo-input" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200 cursor-pointer">
+                        <button type="submit" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2.5 px-4 rounded-md transition-colors">Add Player</button>
                     </form>
-                    <div id="setup-players-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
+                    <div id="setup-players-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto p-1"></div>
                 </div>
             </div>
-            <div class="text-center mt-8"><button id="start-auction-btn" class="btn-grad text-white font-bold py-4 px-10 rounded-full text-2xl shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Start Auction</button></div>
+            <div class="text-center mt-10"><button id="start-auction-btn" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-2xl shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Start Auction</button></div>
         </section>
+    </template>
 
-        <main id="auction-section" class="hidden">
-            <div class="text-center mb-6"><button id="start-random-bid-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-xl">Start Random Bidding</button></div>
+    <template id="auction-template">
+        <section class="space-y-6">
+            <div class="text-center mb-6">
+                <button id="start-random-bid-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-xl transform hover:scale-105 transition-transform">Start Random Bidding</button>
+            </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Available Players</h2><div id="available-players-container" class="space-y-2 max-h-96 overflow-y-auto"></div></div>
-                <div class="glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Sold Players</h2><div id="sold-players-container" class="space-y-2 max-h-96 overflow-y-auto"></div></div>
-                <div class="glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Unsold Players</h2><div id="unsold-players-container" class="space-y-2 max-h-96 overflow-y-auto"></div></div>
+                <div class="glass-card p-4 rounded-2xl">
+                    <div class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
+                         <h2 class="text-xl font-bold">Available Players</h2>
+                         <input id="player-search-input" type="text" placeholder="Search..." class="bg-slate-700/50 dark:bg-slate-800 text-sm p-1.5 rounded-md border border-slate-600 focus:outline-none focus:ring-1 focus:ring-primary">
+                    </div>
+                    <div id="available-players-container" class="space-y-2 max-h-96 overflow-y-auto p-1"></div>
+                </div>
+                <div class="glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Sold Players</h2><div id="sold-players-container" class="space-y-2 max-h-96 overflow-y-auto p-1"></div></div>
+                <div class="glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Unsold Players</h2><div id="unsold-players-container" class="space-y-2 max-h-96 overflow-y-auto p-1"></div></div>
             </div>
             
-            <div class="mt-6 glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Teams</h2><div id="teams-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div></div>
-            
-            <div class="mt-6 glass-card p-4 rounded-2xl">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-4 rounded-2xl"><h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Teams</h2><div id="teams-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
+                <div class="glass-card p-4 rounded-2xl">
+                    <h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Auction Log</h2>
+                    <div id="auction-log-container" class="space-y-2 max-h-48 overflow-y-auto p-1 text-sm"></div>
+                </div>
+            </div>
+
+            <div class="glass-card p-4 rounded-2xl">
                  <h2 class="text-xl font-bold mb-2 border-b border-slate-700 pb-2">Admin Controls</h2>
                  <div class="mb-4">
-                    <label for="bid-increment-input" class="block mb-1 text-sm font-medium text-slate-300">Bid Increment:</label>
-                    <input type="number" id="bid-increment-input" value="10" min="1" class="w-full md:w-1/4 bg-slate-700 p-2 rounded-md border border-slate-600">
+                    <label for="bid-increment-input" class="block mb-1 text-sm font-medium">Bid Increment:</label>
+                    <input type="number" id="bid-increment-input" value="10" min="1" class="w-full md:w-1/4 bg-slate-700/50 dark:bg-slate-800 p-2 rounded-md border border-slate-600">
                 </div>
-                 <form id="live-add-player-form" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                    <input type="text" id="live-player-name" placeholder="Player Name" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required>
-                    <select id="live-player-specialty" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required><option value="" disabled selected>Specialty</option><option value="Batsman">Batsman</option><option value="Bowler">Bowler</option><option value="All-rounder">All-rounder</option></select>
-                    <input type="number" id="live-player-base-price" placeholder="Base Price" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required>
-                    <div class="flex items-center space-x-2 text-slate-400"><input type="checkbox" id="live-player-is-wicketkeeper" class="w-4 h-4 text-violet-600 bg-gray-700 border-gray-600 rounded focus:ring-violet-500"><label for="live-player-is-wicketkeeper">WK?</label></div>
-                    <div class="flex items-center space-x-2 text-slate-400"><input type="checkbox" id="live-player-is-captain" class="w-4 h-4 text-violet-600 bg-gray-700 border-gray-600 rounded focus:ring-violet-500"><label for="live-player-is-captain">C?</label></div>
-                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md">Add Player to Pool</button>
+                 <form id="live-add-player-form" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+                    <input type="text" id="live-player-name" placeholder="Player Name" class="w-full bg-slate-700/50 dark:bg-slate-800 p-2 rounded-md border border-slate-600" required>
+                    <select id="live-player-specialty" class="w-full bg-slate-700/50 dark:bg-slate-800 p-2 rounded-md border border-slate-600" required><option value="" disabled selected>Specialty</option><option value="Batsman">Batsman</option><option value="Bowler">Bowler</option><option value="All-rounder">All-rounder</option></select>
+                    <input type="number" id="live-player-base-price" placeholder="Base Price" class="w-full bg-slate-700/50 dark:bg-slate-800 p-2 rounded-md border border-slate-600" required>
+                    <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" id="live-player-is-wicketkeeper" class="w-4 h-4 text-pink-500 bg-gray-700 border-gray-600 rounded focus:ring-pink-600"><span>WK?</span></label>
+                    <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" id="live-player-is-captain" class="w-4 h-4 text-pink-500 bg-gray-700 border-gray-600 rounded focus:ring-pink-600"><span>C?</span></label>
+                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md">Add Player</button>
                  </form>
             </div>
-        </main>
-        
-        <section id="random-bidding-page" class="hidden fixed inset-0 bg-slate-900 z-40 flex flex-col p-8"><div class="w-full max-w-7xl mx-auto flex-grow flex flex-col"><div class="text-right mb-4"><button id="close-random-bid-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg">Close Bidding</button></div><div class="flex-grow flex flex-col lg:flex-row items-center justify-center gap-8"><div id="bidding-player-card" class="w-full max-w-md text-center opacity-0"><div class="relative w-64 h-64 mx-auto mb-4"><img id="bidding-player-photo" src="https://placehold.co/256x256/0f172a/eab308?text=Player" class="rounded-full w-full h-full object-cover border-8 border-slate-600 shadow-2xl"><span id="bidding-player-specialty" class="absolute bottom-2 right-2 bg-yellow-400 text-slate-900 text-sm font-bold px-4 py-1 rounded-full uppercase"></span></div><h3 id="bidding-player-name" class="text-5xl font-extrabold tracking-tight"></h3><p class="text-slate-400 text-2xl">Base Price: <span id="bidding-player-base-price" class="font-bold text-yellow-400"></span></p></div><div class="w-full lg:w-1/2"><div id="bidding-area" class="w-full text-center"><p class="text-2xl text-slate-300">Current Bid</p><p id="current-bid-amount" class="text-8xl font-black text-white my-2">0 Pts</p><div id="highest-bidder-info" class="h-12 flex items-center justify-center space-x-3 text-xl text-slate-400"></div></div><div class="w-full max-w-md mx-auto mt-8 flex items-center gap-4"><div class="w-full bg-slate-700 rounded-full h-4"><div id="timer-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full" style="width: 100%"></div></div><button id="undo-bid-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">-10</button></div><p id="timer-text" class="text-center text-lg mt-2 text-slate-400">Timer</p><div id="bidding-controls" class="grid grid-cols-2 gap-4 mt-8"></div></div></div><div id="sold-banner" class="hidden absolute inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"><div class="text-center transform -rotate-2"><p id="sold-to-team" class="text-3xl font-bold text-slate-300 mb-2"></p><h2 id="sold-price" class="text-9xl font-black text-yellow-400 uppercase">SOLD</h2></div></div></div></section>
+        </section>
+    </template>
+
+    <!-- Bidding Page (Overlay) -->
+    <div id="random-bidding-page" class="hidden fixed inset-0 bg-slate-900 z-40 flex flex-col p-4 sm:p-8 fade-in">
+        <div class="w-full max-w-7xl mx-auto flex-grow flex flex-col">
+            <div class="text-right mb-4">
+                <button id="close-random-bid-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">Close Bidding</button>
+            </div>
+            <!-- Responsive layout for bidding page -->
+            <div class="flex-grow flex flex-col lg:flex-row items-center justify-center gap-4 md:gap-8">
+                <!-- Player Card -->
+                <div id="bidding-player-card" class="w-full max-w-xs md:max-w-md text-center opacity-0">
+                    <div class="relative w-48 h-48 md:w-64 md:h-64 mx-auto mb-4">
+                        <img id="bidding-player-photo" src="https://placehold.co/256x256/0b1120/f59e0b?text=Player" class="rounded-full w-full h-full object-cover border-8 border-slate-600 shadow-2xl">
+                        <span id="bidding-player-specialty" class="absolute bottom-2 right-2 bg-amber-400 text-slate-900 text-xs md:text-sm font-bold px-3 py-1 rounded-full uppercase"></span>
+                    </div>
+                    <h3 id="bidding-player-name" class="text-3xl md:text-5xl font-extrabold tracking-tight text-white"></h3>
+                    <p class="text-slate-300 text-xl md:text-2xl">Base Price: <span id="bidding-player-base-price" class="font-bold text-amber-400"></span></p>
+                </div>
+                <!-- Bidding Area -->
+                <div class="w-full lg:w-1/2">
+                    <div id="bidding-area" class="w-full text-center">
+                        <p class="text-xl md:text-2xl text-slate-300">Current Bid</p>
+                        <!-- Responsive font size for bid amount -->
+                        <p id="current-bid-amount" class="text-6xl md:text-8xl font-black text-white my-2">0 Pts</p>
+                        <div id="highest-bidder-info" class="h-12 flex items-center justify-center space-x-3 text-lg md:text-xl text-slate-300"></div>
+                    </div>
+                    <div class="w-full max-w-md mx-auto mt-4 md:mt-8 flex items-center gap-4">
+                        <div class="w-full bg-slate-700 rounded-full h-4 overflow-hidden">
+                            <div id="timer-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full" style="width: 100%"></div>
+                        </div>
+                        <button id="undo-bid-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">-10</button>
+                    </div>
+                    <p id="timer-text" class="text-center text-lg mt-2 text-slate-400">Timer</p>
+                    <div id="bidding-controls" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 md:mt-8"></div>
+                </div>
+            </div>
+            <!-- Sold Banner -->
+            <div id="sold-banner" class="hidden absolute inset-0 bg-black bg-opacity-70 flex-col justify-center items-center z-50 pop-in">
+                <div class="text-center transform -rotate-3">
+                    <p id="sold-to-team" class="text-2xl md:text-4xl font-bold text-slate-200 mb-2"></p>
+                    <!-- Responsive font size for SOLD text -->
+                    <h2 id="sold-price" class="text-7xl md:text-9xl font-black text-amber-400 uppercase">SOLD</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div id="generic-modal" class="modal-container fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50 p-4">
+        <div class="modal-content bg-slate-800 p-8 rounded-lg text-center shadow-xl w-full max-w-sm">
+            <p id="modal-title" class="text-xl text-amber-300 font-bold mb-4"></p>
+            <p id="modal-message"></p>
+            <button id="modal-close-btn" class="mt-6 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-md">Close</button>
+        </div>
+    </div>
+    
+    <div id="confirm-modal" class="modal-container fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50 p-4">
+        <div class="modal-content bg-slate-800 p-8 rounded-lg text-center shadow-xl w-full max-w-sm">
+            <p id="confirm-modal-title" class="text-xl font-bold mb-4"></p>
+            <p id="confirm-modal-message" class="mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-modal-cancel-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-6 py-2 rounded-md">Cancel</button>
+                <button id="confirm-modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md">Confirm</button>
+            </div>
+        </div>
     </div>
 
-    <div id="new-auction-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50"><div class="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md"><h3 class="text-2xl font-bold mb-4">Create New Auction</h3><form id="new-auction-form" class="space-y-4"><div><label for="new-auction-name" class="block mb-1 text-sm font-medium">Auction Name:</label><input type="text" id="new-auction-name" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required></div><div><label for="new-auction-place" class="block mb-1 text-sm font-medium">Place:</label><input type="text" id="new-auction-place" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required></div><div><label for="new-auction-date" class="block mb-1 text-sm font-medium">Date:</label><input type="date" id="new-auction-date" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" required></div><div class="flex justify-end space-x-4 mt-6"><button type="button" id="cancel-new-auction-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md">Cancel</button><button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">Create</button></div></form></div></div>
-    <div id="manual-sale-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50"><div class="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md"><h3 class="text-2xl font-bold mb-4">Manual Bidding</h3><div id="manual-sale-player-info" class="mb-4"></div><div class="space-y-4"><div><label for="manual-sale-team-select" class="block mb-1 text-sm font-medium">Sell to Team:</label><select id="manual-sale-team-select" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600"></select></div><div><label for="manual-sale-price-input" class="block mb-1 text-sm font-medium">Sale Price (Points):</label><input type="number" id="manual-sale-price-input" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" placeholder="Enter points"></div></div><div class="flex justify-end space-x-4 mt-6"><button id="cancel-manual-sale-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md">Cancel</button><button id="confirm-manual-sale-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">Confirm Sale</button></div></div></div>
-    <div id="edit-purse-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50"><div class="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-sm"><h3 class="text-2xl font-bold mb-4">Edit Purse</h3><div id="edit-purse-team-info" class="mb-4"></div><div><label for="edit-purse-input" class="block mb-1 text-sm font-medium">New Purse Amount:</label><input type="number" id="edit-purse-input" class="w-full bg-slate-700 p-2 rounded-md border border-slate-600" placeholder="Enter new points total"></div><div class="flex justify-end space-x-4 mt-6"><button id="cancel-edit-purse-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md">Cancel</button><button id="confirm-edit-purse-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">Confirm</button></div></div></div>
+    <div id="form-modal" class="modal-container fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50 p-4">
+        <div class="modal-content bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h3 id="form-modal-title" class="text-2xl font-bold mb-4"></h3>
+            <div id="form-modal-body"></div>
+        </div>
+    </div>
+
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const { jsPDF } = window.jspdf;
-        // --- DOM ELEMENTS ---
-        const landingSection = document.getElementById('landing-section'), setupSection = document.getElementById('setup-section'), auctionSection = document.getElementById('auction-section');
-        const createNewAuctionBtn = document.getElementById('create-new-auction-btn'), previousAuctionsList = document.getElementById('previous-auctions-list');
-        const newAuctionModal = document.getElementById('new-auction-modal'), newAuctionForm = document.getElementById('new-auction-form'), cancelNewAuctionBtn = document.getElementById('cancel-new-auction-btn');
-        const currentAuctionInfo = document.getElementById('current-auction-info'), mainMenuBtn = document.getElementById('main-menu-btn');
-        const addTeamForm = document.getElementById('add-team-form'), addPlayerForm = document.getElementById('add-player-form');
-        const setupTeamsList = document.getElementById('setup-teams-list'), setupPlayersList = document.getElementById('setup-players-list');
-        const startAuctionBtn = document.getElementById('start-auction-btn');
-        const teamsContainer = document.getElementById('teams-container'), availablePlayersContainer = document.getElementById('available-players-container'), soldPlayersContainer = document.getElementById('sold-players-container'), unsoldPlayersContainer = document.getElementById('unsold-players-container');
-        const startRandomBidBtn = document.getElementById('start-random-bid-btn'), closeRandomBidBtn = document.getElementById('close-random-bid-btn');
-        const randomBiddingPage = document.getElementById('random-bidding-page');
-        const biddingPlayerCard = document.getElementById('bidding-player-card'), biddingPlayerName = document.getElementById('bidding-player-name'), biddingPlayerPhoto = document.getElementById('bidding-player-photo'), biddingPlayerSpecialty = document.getElementById('bidding-player-specialty'), biddingPlayerBasePrice = document.getElementById('bidding-player-base-price');
-        const currentBidAmountEl = document.getElementById('current-bid-amount'), highestBidderInfoEl = document.getElementById('highest-bidder-info');
-        const biddingControls = document.getElementById('bidding-controls');
-        const soldBanner = document.getElementById('sold-banner'), soldPriceEl = document.getElementById('sold-price'), soldToTeamEl = document.getElementById('sold-to-team');
-        const timerBar = document.getElementById('timer-bar'), timerText = document.getElementById('timer-text'), undoBidBtn = document.getElementById('undo-bid-btn');
-        const manualSaleModal = document.getElementById('manual-sale-modal'), manualSalePlayerInfo = document.getElementById('manual-sale-player-info'), manualSaleTeamSelect = document.getElementById('manual-sale-team-select'), manualSalePriceInput = document.getElementById('manual-sale-price-input'), confirmManualSaleBtn = document.getElementById('confirm-manual-sale-btn'), cancelManualSaleBtn = document.getElementById('cancel-manual-sale-btn');
-        const editPurseModal = document.getElementById('edit-purse-modal'), editPurseTeamInfo = document.getElementById('edit-purse-team-info'), editPurseInput = document.getElementById('edit-purse-input'), confirmEditPurseBtn = document.getElementById('confirm-edit-purse-btn'), cancelEditPurseBtn = document.getElementById('cancel-edit-purse-btn');
-        const liveAddPlayerForm = document.getElementById('live-add-player-form');
-        const bidIncrementInput = document.getElementById('bid-increment-input');
+    // --- App Module ---
+    const App = (() => {
+        // --- State ---
+        let state = {
+            allAuctions: {},
+            currentAuctionId: null,
+            players: [],
+            teams: [],
+            availablePlayers: [],
+            soldPlayers: [],
+            unsoldPlayers: [],
+            auctionLog: [],
+            currentBiddingPlayer: null,
+            currentBid: 0,
+            highestBidder: null,
+            auctionTimer: null,
+            playerForManualSale: null,
+            teamForPurseEdit: null,
+            timerDuration: 15,
+            bidIncrement: 10,
+            theme: 'dark'
+        };
 
-        // --- SOUNDS ---
-        const bidSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
-        const gavelSound = new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 10, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.8, sustain: 0.01, release: 1.4, attackCurve: 'exponential' } }).toDestination();
-        const timerTickSound = new Tone.Synth({ oscillator: { type: 'square' }, volume: -6, envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.1 } }).toDestination();
+        // --- DOM Elements ---
+        const DOMElements = {
+            viewContainer: document.getElementById('view-container'),
+            currentAuctionInfo: document.getElementById('current-auction-info'),
+            mainMenuBtn: document.getElementById('main-menu-btn'),
+            randomBiddingPage: document.getElementById('random-bidding-page'),
+            biddingPlayerCard: document.getElementById('bidding-player-card'),
+            biddingPlayerName: document.getElementById('bidding-player-name'),
+            biddingPlayerPhoto: document.getElementById('bidding-player-photo'),
+            biddingPlayerSpecialty: document.getElementById('bidding-player-specialty'),
+            biddingPlayerBasePrice: document.getElementById('bidding-player-base-price'),
+            currentBidAmountEl: document.getElementById('current-bid-amount'),
+            highestBidderInfoEl: document.getElementById('highest-bidder-info'),
+            biddingControls: document.getElementById('bidding-controls'),
+            soldBanner: document.getElementById('sold-banner'),
+            soldPriceEl: document.getElementById('sold-price'),
+            soldToTeamEl: document.getElementById('sold-to-team'),
+            timerBar: document.getElementById('timer-bar'),
+            timerText: document.getElementById('timer-text'),
+            undoBidBtn: document.getElementById('undo-bid-btn'),
+            closeRandomBidBtn: document.getElementById('close-random-bid-btn'),
+            themeSwitcher: document.getElementById('theme-switcher'),
+            themeIconLight: document.getElementById('theme-icon-light'),
+            themeIconDark: document.getElementById('theme-icon-dark'),
+            genericModal: document.getElementById('generic-modal'),
+            modalTitle: document.getElementById('modal-title'),
+            modalMessage: document.getElementById('modal-message'),
+            modalCloseBtn: document.getElementById('modal-close-btn'),
+            confirmModal: document.getElementById('confirm-modal'),
+            confirmModalTitle: document.getElementById('confirm-modal-title'),
+            confirmModalMessage: document.getElementById('confirm-modal-message'),
+            confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
+            confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn'),
+            formModal: document.getElementById('form-modal'),
+            formModalTitle: document.getElementById('form-modal-title'),
+            formModalBody: document.getElementById('form-modal-body'),
+        };
 
-        // --- DATA & STATE ---
-        let allAuctions = {};
-        let currentAuctionId = null;
-        let players = [], teams = [], availablePlayers = [], soldPlayers = [], unsoldPlayers = [];
-        let currentBiddingPlayer = null, currentBid = 0, highestBidder = null;
-        let auctionTimer, playerForManualSale = null, teamForPurseEdit = null;
-        const TIMER_DURATION = 15;
-        let BID_INCREMENT = 10;
+        // --- Sounds ---
+        const Sounds = {
+            bid: new Tone.Synth({ oscillator: { type: 'sine' }, volume: -12, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+            gavel: new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 10, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.8, sustain: 0.01, release: 1.4, attackCurve: 'exponential' } }).toDestination(),
+            timerTick: new Tone.Synth({ oscillator: { type: 'square' }, volume: -10, envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.1 } }).toDestination(),
+            log: new Tone.NoiseSynth({ noise: { type: 'pink' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0 } }).toDestination(),
+            sold: new Tone.PluckSynth({ attackNoise: 1, dampening: 4000, resonance: 0.7, volume: -5 }).toDestination()
+        };
 
-        // --- INITIALIZATION ---
-        function init() {
-            loadAllAuctions();
-            createNewAuctionBtn.addEventListener('click', () => newAuctionModal.classList.add('active'));
-            cancelNewAuctionBtn.addEventListener('click', () => newAuctionModal.classList.remove('active'));
-            newAuctionForm.addEventListener('submit', handleCreateNewAuction);
-            mainMenuBtn.addEventListener('click', showLandingPage);
-
-            addTeamForm.addEventListener('submit', handleAddTeam);
-            addPlayerForm.addEventListener('submit', handleAddPlayer);
-            liveAddPlayerForm.addEventListener('submit', handleLiveAddPlayer);
-            startAuctionBtn.addEventListener('click', startAuction);
-            startRandomBidBtn.addEventListener('click', initiateRandomBid);
-            closeRandomBidBtn.addEventListener('click', closeRandomBidding);
-            undoBidBtn.addEventListener('click', handleUndoBid);
-            bidIncrementInput.addEventListener('change', handleBidIncrementChange);
-            
-            setupTeamsList.addEventListener('click', handleSetupListClick);
-            setupPlayersList.addEventListener('click', handleSetupListClick);
-            availablePlayersContainer.addEventListener('click', handleListClick);
-            soldPlayersContainer.addEventListener('click', handleListClick);
-            unsoldPlayersContainer.addEventListener('click', handleListClick);
-            teamsContainer.addEventListener('click', handleTeamListClick);
-            previousAuctionsList.addEventListener('click', handlePreviousAuctionClick);
-
-            confirmManualSaleBtn.addEventListener('click', handleConfirmManualSale);
-            cancelManualSaleBtn.addEventListener('click', () => manualSaleModal.classList.remove('active'));
-            confirmEditPurseBtn.addEventListener('click', handleConfirmEditPurse);
-            cancelEditPurseBtn.addEventListener('click', () => editPurseModal.classList.remove('active'));
-        }
-        
-        // --- AUCTION MANAGEMENT ---
-        function loadAllAuctions() { const data = localStorage.getItem('crictionAuctions'); if(data) { allAuctions = JSON.parse(data); } renderLandingPage(); }
-        function saveCurrentAuctionState() { if (!currentAuctionId) return; allAuctions[currentAuctionId] = { ...allAuctions[currentAuctionId], players, teams, availablePlayers, soldPlayers, unsoldPlayers }; localStorage.setItem('crictionAuctions', JSON.stringify(allAuctions)); }
-        function renderLandingPage() {
-            previousAuctionsList.innerHTML = Object.keys(allAuctions).map(id => {
-                const auction = allAuctions[id];
-                return `<div class="glass-card p-4 rounded-lg flex justify-between items-center">
-                            <div class="cursor-pointer flex-grow" data-id="${id}">
-                                <h4 class="font-bold text-lg">${auction.name}</h4>
-                                <p class="text-sm text-slate-400">${auction.place} - ${auction.date}</p>
-                            </div>
-                            <button class="delete-auction-btn text-xs bg-red-800 hover:bg-red-700 p-2 rounded-full" data-id="${id}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
-                        </div>`;
-            }).join('') || '<p class="text-center text-slate-400">No previous auctions found.</p>';
-        }
-        function showLandingPage() { landingSection.classList.remove('hidden'); setupSection.classList.add('hidden'); auctionSection.classList.add('hidden'); mainMenuBtn.classList.add('hidden'); currentAuctionInfo.textContent = ''; currentAuctionId = null; }
-        function handleCreateNewAuction(e) { e.preventDefault(); const name = document.getElementById('new-auction-name').value; const place = document.getElementById('new-auction-place').value; const date = document.getElementById('new-auction-date').value; if(!name || !place || !date) return; currentAuctionId = Date.now(); allAuctions[currentAuctionId] = { name, place, date, players: [], teams: [], availablePlayers: [], soldPlayers: [], unsoldPlayers: [] }; saveCurrentAuctionState(); loadAuction(currentAuctionId, true); newAuctionModal.classList.remove('active'); newAuctionForm.reset(); }
-        function handlePreviousAuctionClick(e) {
-            if (e.target.closest('.delete-auction-btn')) {
-                const id = e.target.closest('.delete-auction-btn').dataset.id;
-                handleDeleteAuction(id);
-            } else {
-                const target = e.target.closest('[data-id]');
-                if (target) {
-                    loadAuction(target.dataset.id, false);
+        // --- Utility Functions ---
+        const Utils = {
+            saveState: () => {
+                if (!state.currentAuctionId) return;
+                state.allAuctions[state.currentAuctionId] = {
+                    ...state.allAuctions[state.currentAuctionId],
+                    players: state.players,
+                    teams: state.teams,
+                    availablePlayers: state.availablePlayers,
+                    soldPlayers: state.soldPlayers,
+                    unsoldPlayers: state.unsoldPlayers,
+                    auctionLog: state.auctionLog,
+                };
+                localStorage.setItem('crictionAuctions', JSON.stringify(state.allAuctions));
+            },
+            loadState: () => {
+                const data = localStorage.getItem('crictionAuctions');
+                state.allAuctions = data ? JSON.parse(data) : {};
+                const theme = localStorage.getItem('crictionTheme');
+                if (theme) {
+                    state.theme = theme;
+                    document.documentElement.className = theme;
+                    DOMElements.themeIconLight.classList.toggle('hidden', theme === 'dark');
+                    DOMElements.themeIconDark.classList.toggle('hidden', theme === 'light');
                 }
-            }
-        }
-        function handleDeleteAuction(id) {
-            const auctionName = allAuctions[id]?.name || 'this auction';
-            const confirmation = window.confirm(`Are you sure you want to delete "${auctionName}"? This action cannot be undone.`);
-            if (confirmation) {
-                delete allAuctions[id];
-                localStorage.setItem('crictionAuctions', JSON.stringify(allAuctions));
-                renderLandingPage();
-            }
-        }
-        function loadAuction(id, isNew) {
-            currentAuctionId = id;
-            const data = allAuctions[id];
-            players = data.players; teams = data.teams; availablePlayers = data.availablePlayers; soldPlayers = data.soldPlayers; unsoldPlayers = data.unsoldPlayers;
-            
-            landingSection.classList.add('hidden');
-            mainMenuBtn.classList.remove('hidden');
-            currentAuctionInfo.textContent = `${data.name} | ${data.place} | ${data.date}`;
+            },
+            showModal: (title, message) => {
+                DOMElements.modalTitle.textContent = title;
+                DOMElements.modalMessage.textContent = message;
+                DOMElements.genericModal.classList.add('active');
+            },
+            showConfirm: (title, message, onConfirm) => {
+                DOMElements.confirmModalTitle.textContent = title;
+                DOMElements.confirmModalMessage.textContent = message;
+                DOMElements.confirmModal.classList.add('active');
+                
+                const newConfirmBtn = DOMElements.confirmModalConfirmBtn.cloneNode(true);
+                DOMElements.confirmModalConfirmBtn.parentNode.replaceChild(newConfirmBtn, DOMElements.confirmModalConfirmBtn);
+                DOMElements.confirmModalConfirmBtn = newConfirmBtn;
 
-            if(isNew || !data.players.length) {
-                setupSection.classList.remove('hidden');
-                auctionSection.classList.add('hidden');
-                renderSetupLists();
-            } else {
-                setupSection.classList.add('hidden');
-                auctionSection.classList.remove('hidden');
-                renderAllLists();
-            }
-        }
-
-        // --- SETUP LOGIC ---
-        function handleAddTeam(e) { e.preventDefault(); const name = document.getElementById('team-name').value; const purse = parseInt(document.getElementById('team-purse').value); const logoFile = document.getElementById('team-logo-input').files[0]; if (!name || !purse) return; const newTeam = { id: Date.now(), name, purse }; if (logoFile) { const reader = new FileReader(); reader.onload = (event) => { newTeam.logo = event.target.result; teams.push(newTeam); renderSetupLists(); saveCurrentAuctionState(); }; reader.readAsDataURL(logoFile); } else { newTeam.logo = `https://placehold.co/40x40/0f172a/ffffff?text=${name.substring(0,2).toUpperCase()}`; teams.push(newTeam); renderSetupLists(); saveCurrentAuctionState(); } addTeamForm.reset(); validateSetup(); }
-        function handleAddPlayer(e) { e.preventDefault(); const name = document.getElementById('player-name-input').value; const specialty = document.getElementById('player-specialty-input').value; const isWicketkeeper = document.getElementById('player-is-wicketkeeper-input').checked; const isCaptain = document.getElementById('player-is-captain-input').checked; const basePrice = parseInt(document.getElementById('player-base-price-input').value); const photoFile = document.getElementById('player-photo-input').files[0]; if (name && specialty && basePrice) { const newPlayer = { id: Date.now(), name, specialty, isWicketkeeper, isCaptain, basePrice }; if (photoFile) { const reader = new FileReader(); reader.onload = (event) => { newPlayer.photo = event.target.result; players.push(newPlayer); renderSetupLists(); saveCurrentAuctionState(); }; reader.readAsDataURL(photoFile); } else { newPlayer.photo = `https://placehold.co/200x200/1e3a8a/ffffff?text=${name.split(' ').map(n=>n[0]).join('')}`; players.push(newPlayer); renderSetupLists(); saveCurrentAuctionState(); } addPlayerForm.reset(); } validateSetup(); }
-        function handleSetupListClick(event) { if (event.target.classList.contains('remove-btn')) { const id = parseInt(event.target.dataset.id); if (event.currentTarget.id === 'setup-teams-list') { teams = teams.filter(t => t.id !== id); renderSetupLists(); } else if (event.currentTarget.id === 'setup-players-list') { players = players.filter(p => p.id !== id); renderSetupLists(); } saveCurrentAuctionState(); validateSetup(); } }
-        function renderSetupLists() { setupTeamsList.innerHTML = teams.map(t => `<div class="flex justify-between items-center bg-slate-800 p-2 rounded"><div class="flex items-center gap-2"><img src="${t.logo}" class="w-6 h-6 rounded-full object-cover"><span>${t.name} - ${t.purse} Pts</span></div><button class="remove-btn text-xs bg-red-600 hover:bg-red-700 p-1 rounded" data-id="${t.id}">Remove</button></div>`).join(''); setupPlayersList.innerHTML = players.map(p => `<div class="flex justify-between items-center bg-slate-800 p-2 rounded">${p.name} - ${p.specialty}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''} <button class="remove-btn text-xs bg-red-600 hover:bg-red-700 p-1 rounded" data-id="${p.id}">Remove</button></div>`).join(''); }
-        function validateSetup() { startAuctionBtn.disabled = !(teams.length >= 2 && players.length >= 1); }
-
-        // --- RENDER FUNCTIONS ---
-        function renderAllLists() { renderTeams(); renderAvailablePlayers(); renderSoldPlayers(); renderUnsoldPlayers(); }
-        function renderTeams() { teamsContainer.innerHTML = teams.map(team => `<div class="flex justify-between items-center glass-card p-3 rounded-lg"><div class="flex items-center space-x-3"><img src="${team.logo}" alt="${team.name}" class="w-8 h-8 rounded-full object-cover"><span class="font-semibold">${team.name}</span></div><div class="flex items-center space-x-2"><span class="font-bold text-green-400">${team.purse} Pts</span><button class="edit-purse-btn text-xs bg-yellow-600 hover:bg-yellow-700 p-1 rounded" data-team-id="${team.id}">Edit</button><button class="download-roster-btn text-xs bg-blue-500 hover:bg-blue-600 p-1 rounded" data-team-id="${team.id}">PDF</button></div></div>`).join(''); }
-        function renderAvailablePlayers() { availablePlayersContainer.innerHTML = availablePlayers.map(p => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-md"><span class="font-medium">${p.name}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}</span><div class="flex gap-2"><button class="manual-bid-btn text-xs bg-green-600 hover:bg-green-700 p-1 rounded" data-player-id="${p.id}">Manual Bid</button><button class="remove-player-btn text-xs bg-red-600 hover:bg-red-700 p-1 rounded" data-player-id="${p.id}">Remove</button></div></div>`).join(''); }
-        function renderSoldPlayers() { soldPlayersContainer.innerHTML = soldPlayers.map(sale => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-md"><div class="flex flex-col"><span class="font-medium">${sale.name}${sale.isWicketkeeper ? ' (WK)' : ''}${sale.isCaptain ? ' (C)' : ''}</span><span class="text-xs text-slate-400">${sale.soldPrice} Pts to ${teams.find(t=>t.id === sale.teamId)?.name}</span></div><button class="make-available-btn text-xs bg-orange-600 hover:bg-orange-700 p-1 rounded" data-player-id="${sale.id}">Make Available</button></div>`).join(''); }
-        function renderUnsoldPlayers() { unsoldPlayersContainer.innerHTML = unsoldPlayers.map(p => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-md"><span class="font-medium">${p.name}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}</span><div class="flex gap-2"><button class="manual-bid-btn text-xs bg-green-600 hover:bg-green-700 p-1 rounded" data-player-id="${p.id}">Manual Bid</button><button class="make-available-btn text-xs bg-orange-600 hover:bg-orange-700 p-1 rounded" data-player-id="${p.id}">Make Available</button></div></div>`).join(''); }
-        function renderBiddingControls() { biddingControls.innerHTML = teams.map(team => `<button data-team-id="${team.id}" class="bid-btn btn-grad text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Bid for ${team.name}</button>`).join(''); document.querySelectorAll('.bid-btn').forEach(btn => btn.addEventListener('click', handleBid)); }
-
-        // --- AUCTION LOGIC ---
-        function startAuction() { Tone.start(); setupSection.classList.add('hidden'); auctionSection.classList.remove('hidden'); availablePlayers = [...players]; renderAllLists(); saveCurrentAuctionState(); }
-        function handleListClick(event) { const playerId = parseInt(event.target.dataset.playerId); if (!playerId) return; const player = findGlobalPlayer(playerId); if (!player) return; if (event.target.classList.contains('manual-bid-btn')) { openManualSaleModal(player); } if (event.target.classList.contains('make-available-btn')) { makePlayerAvailable(player); } if (event.target.classList.contains('remove-player-btn')) { players = players.filter(p => p.id !== playerId); availablePlayers = availablePlayers.filter(p => p.id !== playerId); renderAllLists(); saveCurrentAuctionState(); showModal('Player Removed', `${player.name} has been removed from the auction.`); } }
-        function handleTeamListClick(event) { if (event.target.classList.contains('download-roster-btn')) { downloadRoster(event.target.dataset.teamId); } if (event.target.classList.contains('edit-purse-btn')) { openEditPurseModal(parseInt(event.target.dataset.teamId)); } }
-
-        // --- LIVE ADMIN ---
-        function handleLiveAddPlayer(e) { e.preventDefault(); const name = document.getElementById('live-player-name').value; const specialty = document.getElementById('live-player-specialty').value; const isWicketkeeper = document.getElementById('live-player-is-wicketkeeper').checked; const isCaptain = document.getElementById('live-player-is-captain').checked; const basePrice = parseInt(document.getElementById('live-player-base-price').value); if (name && specialty && basePrice) { const newPlayer = { id: Date.now(), name, specialty, isWicketkeeper, isCaptain, basePrice, photo: `https://placehold.co/200x200/1e3a8a/ffffff?text=${name.split(' ').map(n=>n[0]).join('')}` }; players.push(newPlayer); availablePlayers.push(newPlayer); renderAllLists(); saveCurrentAuctionState(); showModal('Player Added', `${newPlayer.name} is now available for bidding.`); liveAddPlayerForm.reset(); } }
-        function openEditPurseModal(teamId) { teamForPurseEdit = teams.find(t => t.id === teamId); if (!teamForPurseEdit) return; editPurseTeamInfo.innerHTML = `<p class="text-lg font-semibold">${teamForPurseEdit.name}</p>`; editPurseInput.value = teamForPurseEdit.purse; editPurseModal.classList.add('active'); }
-        function handleConfirmEditPurse() { const newPurse = parseInt(editPurseInput.value); if (teamForPurseEdit && !isNaN(newPurse) && newPurse >= 0) { teamForPurseEdit.purse = newPurse; renderTeams(); saveCurrentAuctionState(); editPurseModal.classList.remove('active'); } else { showModal('Invalid Input', 'Please enter a valid, non-negative number for the purse.'); } }
-        function handleBidIncrementChange(e) { const newValue = parseInt(e.target.value); if (!isNaN(newValue) && newValue > 0) { BID_INCREMENT = newValue; undoBidBtn.textContent = `-${BID_INCREMENT}`; showModal('Success', `Bid increment is now set to ${BID_INCREMENT} points.`); } else { e.target.value = BID_INCREMENT; showModal('Invalid Value', 'Please enter a positive number for the bid increment.'); } }
-
-        // --- RANDOM BIDDING ---
-        function initiateRandomBid() { if (availablePlayers.length === 0) { showModal('No Players', 'There are no available players to bid on.'); return; } const player = availablePlayers[Math.floor(Math.random() * availablePlayers.length)]; randomBiddingPage.classList.remove('hidden'); startBiddingForPlayer(player); }
-        function closeRandomBidding() { clearInterval(auctionTimer); currentBiddingPlayer = null; randomBiddingPage.classList.add('hidden'); soldBanner.classList.add('hidden'); }
-        function startBiddingForPlayer(player) { currentBiddingPlayer = player; currentBid = player.basePrice; highestBidder = null; biddingPlayerCard.classList.remove('player-card-enter'); void biddingPlayerCard.offsetWidth; biddingPlayerCard.classList.add('player-card-enter'); biddingPlayerName.textContent = player.name; biddingPlayerPhoto.src = player.photo; biddingPlayerSpecialty.textContent = `${player.specialty}${player.isWicketkeeper ? ' (WK)' : ''}${player.isCaptain ? ' (C)' : ''}`; biddingPlayerBasePrice.textContent = `${player.basePrice} Pts`; renderBiddingControls(); updateBiddingUI(); startTimer(); }
-        function handleBid(event) { const teamId = parseInt(event.target.dataset.teamId); const team = teams.find(t => t.id === teamId); const newBid = currentBid + BID_INCREMENT; if (team.purse >= newBid) { currentBid = newBid; highestBidder = teamId; bidSound.triggerAttackRelease("C4", "8n"); updateBiddingUI(); startTimer(); } else { showModal('Insufficient Funds!', `${team.name} does not have enough points.`); } }
-        function handleUndoBid() { if (!highestBidder) return; currentBid -= BID_INCREMENT; if (currentBid < currentBiddingPlayer.basePrice) { currentBid = currentBiddingPlayer.basePrice; highestBidder = null; } updateBiddingUI(); startTimer(); }
-        function startTimer() { clearInterval(auctionTimer); timeLeft = TIMER_DURATION; timerBar.style.transition = 'width 0.1s linear'; auctionTimer = setInterval(() => { timeLeft -= 0.1; const percentage = (timeLeft / TIMER_DURATION) * 100; timerBar.style.width = `${percentage}%`; timerText.textContent = `Time left: ${Math.ceil(timeLeft)}s`; if (timeLeft <= 5 && timeLeft > 0) { timerTickSound.triggerAttackRelease("C6", "32n", Tone.now() + (5-timeLeft)); } if (timeLeft <= 0) { clearInterval(auctionTimer); sellBiddingPlayer(); } }, 100); }
-        function sellBiddingPlayer() { gavelSound.triggerAttackRelease("C2", "1n", Tone.now()); if (highestBidder) { const winningTeam = teams.find(t => t.id === highestBidder); processSale(currentBiddingPlayer, winningTeam, currentBid); soldToTeamEl.textContent = `Sold to ${winningTeam.name}`; soldPriceEl.innerHTML = `${currentBid} Pts`; soldBanner.classList.remove('hidden'); createConfetti(); } else { removeFromList(availablePlayers, currentBiddingPlayer.id); if(!unsoldPlayers.find(p => p.id === currentBiddingPlayer.id)) { unsoldPlayers.push(currentBiddingPlayer); } soldToTeamEl.textContent = `${currentBiddingPlayer.name}`; soldPriceEl.innerHTML = `UNSOLD`; soldBanner.classList.remove('hidden'); } setTimeout(() => { closeRandomBidding(); renderAllLists(); }, 3000); }
-        function updateBiddingUI() { currentBidAmountEl.textContent = `${currentBid} Pts`; currentBidAmountEl.classList.add('bid-update'); currentBidAmountEl.onanimationend = () => currentBidAmountEl.classList.remove('bid-update'); undoBidBtn.disabled = !highestBidder; if (highestBidder) { const team = teams.find(t => t.id === highestBidder); highestBidderInfoEl.innerHTML = `<img src="${team.logo}" alt="${team.name}" class="w-10 h-10 rounded-full object-cover"><span class="font-semibold">${team.name}</span>`; } else { highestBidderInfoEl.innerHTML = '<span>Waiting for first bid...</span>'; } }
-
-        // --- MANUAL & CORE LOGIC ---
-        function openManualSaleModal(player) { playerForManualSale = player; manualSalePlayerInfo.innerHTML = `<p class="text-lg font-semibold">${player.name}</p><p class="text-sm text-slate-400">${player.specialty}${player.isWicketkeeper ? ' (WK)' : ''}${player.isCaptain ? ' (C)' : ''} - Base: ${player.basePrice} Pts</p>`; manualSaleTeamSelect.innerHTML = teams.map(t => `<option value="${t.id}">${t.name} (${t.purse} Pts)</option>`).join(''); manualSalePriceInput.value = ''; manualSaleModal.classList.add('active'); }
-        function handleConfirmManualSale() { const teamId = parseInt(manualSaleTeamSelect.value); const price = parseInt(manualSalePriceInput.value); const team = teams.find(t => t.id === teamId); if (!price || price <= 0) { showModal('Invalid Price', 'Please enter a valid sale price.'); return; } if (team.purse < price) { showModal('Insufficient Funds', `${team.name} does not have enough points.`); return; } processSale(playerForManualSale, team, price); manualSaleModal.classList.remove('active'); showModal('Sale Successful', `${playerForManualSale.name} sold to ${team.name} for ${price} Pts.`); }
-        function makePlayerAvailable(player) { const saleIndex = soldPlayers.findIndex(s => s.id === player.id); if (saleIndex > -1) { const oldSale = soldPlayers[saleIndex]; const oldTeam = teams.find(t => t.id === oldSale.teamId); oldTeam.purse += oldSale.soldPrice; } removeFromList(soldPlayers, player.id); removeFromList(unsoldPlayers, player.id); if (!availablePlayers.find(p => p.id === player.id)) { availablePlayers.push(player); } renderAllLists(); saveCurrentAuctionState(); showModal('Player Available', `${player.name} is now in the Available Players list.`); }
-        function processSale(player, team, price) { if (player.id === currentBiddingPlayer?.id) { currentBiddingPlayer = null; } const existingSaleIndex = soldPlayers.findIndex(s => s.id === player.id); if(existingSaleIndex > -1) { const oldSale = soldPlayers[existingSaleIndex]; const oldTeam = teams.find(t => t.id === oldSale.teamId); oldTeam.purse += oldSale.soldPrice; } team.purse -= price; removeFromList(availablePlayers, player.id); removeFromList(soldPlayers, player.id); removeFromList(unsoldPlayers, player.id); soldPlayers.push({ ...player, soldPrice: price, teamId: team.id, saleId: Date.now() }); renderAllLists(); saveCurrentAuctionState(); }
-        function findGlobalPlayer(playerId) { return players.find(p => p.id === playerId); }
-        function removeFromList(list, playerId) { const index = list.findIndex(p => p.id === playerId); if (index > -1) list.splice(index, 1); }
-
-        // --- UTILITIES ---
-        function downloadRoster(teamId) {
-            const doc = new jsPDF();
-            const team = teams.find(t => t.id == teamId);
-            const teamPlayers = soldPlayers.filter(p => p.teamId == teamId);
-
-            // Add Team Logo
-            if (team.logo) {
-                try {
-                    doc.addImage(team.logo, 'PNG', 170, 8, 25, 25);
-                } catch (e) {
-                    console.error("Error adding team logo to PDF:", e);
-                }
-            }
-
-            doc.setFontSize(40);
-            doc.setTextColor(200);
-            doc.text("CRICTION BY MANGAN RAY", doc.internal.pageSize.getWidth() / 2, 150, { align: 'center', angle: -45 });
-            doc.setTextColor(0);
-            doc.setFontSize(22);
-            doc.text(`${team.name} - Lineup`, 20, 20);
-            doc.setFontSize(12);
-            doc.text(`Remaining Purse: ${team.purse} Points`, 20, 30);
-            if (teamPlayers.length > 0) {
-                const tableData = teamPlayers.map(p => [`${p.name}`, `${p.specialty}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}`, `${p.soldPrice} Pts`]);
-                doc.autoTable({ 
-                    head: [['Player Name', 'Specialty', 'Sold Price']], 
-                    body: tableData, 
-                    startY: 40, 
-                    theme: 'grid'
+                DOMElements.confirmModalConfirmBtn.addEventListener('click', () => {
+                    onConfirm();
+                    Utils.closeModal();
                 });
-            } else {
-                doc.text("No players bought yet.", 20, 50);
+            },
+            closeModal: () => {
+                DOMElements.genericModal.classList.remove('active');
+                DOMElements.confirmModal.classList.remove('active');
+                DOMElements.formModal.classList.remove('active');
+            },
+            findPlayer: (playerId) => state.players.find(p => p.id === playerId),
+            removePlayerFromList: (list, playerId) => {
+                const index = list.findIndex(p => p.id === playerId);
+                if (index > -1) list.splice(index, 1);
+            },
+            logEvent: (message, type = 'info') => {
+                const colorMap = {
+                    'info': 'text-slate-400',
+                    'bid': 'text-blue-400',
+                    'sale': 'text-green-400',
+                    'unsold': 'text-yellow-400',
+                    'undo': 'text-orange-400',
+                    'system': 'text-pink-400'
+                };
+                const timestamp = new Date().toLocaleTimeString();
+                state.auctionLog.unshift({ message, type, timestamp });
+                if (state.auctionLog.length > 50) state.auctionLog.pop();
+                Views.renderAuctionLog();
+                Utils.saveState();
+                Sounds.log.triggerAttackRelease("8n");
+            },
+            createConfetti: () => {
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'absolute w-2 h-2 rounded-full';
+                    confetti.style.left = `${Math.random() * 100}%`;
+                    confetti.style.top = `${-20}px`;
+                    confetti.style.backgroundColor = ['#3b82f6', '#ec4899', '#f59e0b', '#10b981'][Math.floor(Math.random() * 4)];
+                    confetti.style.animation = `fall ${2 + Math.random() * 2}s linear forwards`;
+                    confetti.style.animationDelay = `${Math.random() * 2}s`;
+                    DOMElements.randomBiddingPage.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }
+                const style = document.createElement('style');
+                style.innerHTML = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }`;
+                document.head.appendChild(style);
+                setTimeout(() => document.head.removeChild(style), 4000);
             }
-            doc.save(`roster-${team.name.toLowerCase().replace(/\s/g, '-')}.pdf`);
-        }
-        function createConfetti() { for (let i = 0; i < 100; i++) { const confetti = document.createElement('div'); confetti.classList.add('confetti'); confetti.style.left = `${Math.random() * 100}%`; confetti.style.top = `${-20}px`; confetti.style.backgroundColor = ['#facc15', '#4ade80', '#60a5fa', '#c084fc'][Math.floor(Math.random() * 4)]; confetti.style.animationDelay = `${Math.random() * 2}s`; randomBiddingPage.appendChild(confetti); setTimeout(() => confetti.remove(), 3000); } }
-        function showModal(title, message) { const modal = document.createElement('div'); modal.className = 'modal active fixed inset-0 bg-black bg-opacity-70 justify-center items-center z-50'; modal.innerHTML = `<div class="bg-slate-800 p-8 rounded-lg text-center shadow-xl w-full max-w-sm"><p class="text-xl text-amber-300 font-bold mb-4">${title}</p><p>${message}</p><button onclick="this.parentElement.parentElement.remove()" class="mt-6 bg-amber-500 text-white px-4 py-2 rounded">Close</button></div>`; document.body.appendChild(modal); }
-        
-        init();
-    });
+        };
+
+        // --- View Rendering ---
+        const Views = {
+            render: (templateId) => {
+                const template = document.getElementById(templateId);
+                DOMElements.viewContainer.innerHTML = '';
+                DOMElements.viewContainer.appendChild(template.content.cloneNode(true));
+            },
+            landing: () => {
+                Views.render('landing-template');
+                const list = document.getElementById('previous-auctions-list');
+                list.innerHTML = Object.keys(state.allAuctions).map(id => {
+                    const auction = state.allAuctions[id];
+                    return `<div class="glass-card p-4 rounded-lg flex justify-between items-center hover:scale-[1.02] hover:shadow-lg">
+                                <div class="cursor-pointer flex-grow" data-action="load-auction" data-id="${id}">
+                                    <h4 class="font-bold text-lg">${auction.name}</h4>
+                                    <p class="text-sm" style="color: var(--text-muted);">${auction.place} - ${auction.date}</p>
+                                </div>
+                                <button class="delete-auction-btn text-xs bg-red-800 hover:bg-red-700 p-2 rounded-full" data-action="delete-auction" data-id="${id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            </div>`;
+                }).join('') || `<p class="text-center" style="color: var(--text-muted);">No previous auctions found.</p>`;
+                document.getElementById('create-new-auction-btn').addEventListener('click', EventHandlers.showNewAuctionForm);
+            },
+            setup: () => {
+                Views.render('setup-template');
+                Views.renderSetupLists();
+                document.getElementById('add-team-form').addEventListener('submit', EventHandlers.addTeam);
+                document.getElementById('add-player-form').addEventListener('submit', EventHandlers.addPlayer);
+                document.getElementById('start-auction-btn').addEventListener('click', EventHandlers.startAuction);
+            },
+            auction: () => {
+                Views.render('auction-template');
+                Views.renderAllLists();
+                document.getElementById('start-random-bid-btn').addEventListener('click', EventHandlers.initiateRandomBid);
+                document.getElementById('live-add-player-form').addEventListener('submit', EventHandlers.liveAddPlayer);
+                document.getElementById('bid-increment-input').addEventListener('change', EventHandlers.bidIncrementChange);
+                document.getElementById('player-search-input').addEventListener('input', EventHandlers.filterPlayers);
+            },
+            renderSetupLists: () => {
+                const teamsList = document.getElementById('setup-teams-list');
+                const playersList = document.getElementById('setup-players-list');
+                if (!teamsList || !playersList) return;
+                
+                teamsList.innerHTML = state.teams.map(t => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded">
+                    <div class="flex items-center gap-2"><img src="${t.logo}" class="w-6 h-6 rounded-full object-cover"><span>${t.name} - ${t.purse} Pts</span></div>
+                    <button class="remove-btn text-xs bg-red-600 hover:bg-red-700 p-1 rounded" data-action="remove-setup-team" data-id="${t.id}">Remove</button>
+                </div>`).join('');
+                
+                playersList.innerHTML = state.players.map(p => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded">
+                    ${p.name} - ${p.specialty}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}
+                    <button class="remove-btn text-xs bg-red-600 hover:bg-red-700 p-1 rounded" data-action="remove-setup-player" data-id="${p.id}">Remove</button>
+                </div>`).join('');
+                
+                document.getElementById('start-auction-btn').disabled = !(state.teams.length >= 2 && state.players.length >= 1);
+            },
+            renderAllLists: (filter = '') => {
+                document.getElementById('teams-container').innerHTML = state.teams.map(team => `<div class="flex justify-between items-center glass-card p-3 rounded-lg">
+                    <div class="flex items-center space-x-3"><img src="${team.logo}" alt="${team.name}" class="w-8 h-8 rounded-full object-cover"><span class="font-semibold">${team.name}</span></div>
+                    <div class="flex items-center space-x-2"><span class="font-bold text-green-400">${team.purse} Pts</span>
+                        <button class="edit-purse-btn text-xs bg-yellow-600 hover:bg-yellow-700 p-1 rounded" data-action="edit-purse" data-id="${team.id}">Edit</button>
+                        <button class="download-roster-btn text-xs bg-blue-500 hover:bg-blue-600 p-1 rounded" data-action="download-roster" data-id="${team.id}">PDF</button>
+                    </div></div>`).join('');
+                
+                const filteredPlayers = state.availablePlayers.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+                document.getElementById('available-players-container').innerHTML = filteredPlayers.map(p => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-md">
+                    <span class="font-medium">${p.name}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}</span>
+                    <div class="flex gap-2">
+                        <button class="manual-bid-btn text-xs bg-green-600 hover:bg-green-700 p-1 rounded" data-action="manual-bid" data-id="${p.id}">Manual</button>
+                        <button class="remove-player-btn text-xs bg-red-600 hover:bg-red-700 p-1 rounded" data-action="remove-player" data-id="${p.id}">Remove</button>
+                    </div></div>`).join('');
+
+                document.getElementById('sold-players-container').innerHTML = state.soldPlayers.map(sale => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-md">
+                    <div><span class="font-medium">${sale.name}${sale.isWicketkeeper ? ' (WK)' : ''}${sale.isCaptain ? ' (C)' : ''}</span><span class="text-xs text-slate-400 block">${sale.soldPrice} Pts to ${state.teams.find(t=>t.id === sale.teamId)?.name}</span></div>
+                    <button class="make-available-btn text-xs bg-orange-600 hover:bg-orange-700 p-1 rounded" data-action="make-available" data-id="${sale.id}">Undo</button>
+                </div>`).join('');
+
+                document.getElementById('unsold-players-container').innerHTML = state.unsoldPlayers.map(p => `<div class="flex justify-between items-center bg-slate-800/50 p-2 rounded-md">
+                    <span class="font-medium">${p.name}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}</span>
+                    <div class="flex gap-2">
+                        <button class="manual-bid-btn text-xs bg-green-600 hover:bg-green-700 p-1 rounded" data-action="manual-bid" data-id="${p.id}">Manual</button>
+                        <button class="make-available-btn text-xs bg-orange-600 hover:bg-orange-700 p-1 rounded" data-action="make-available" data-id="${p.id}">Re-list</button>
+                    </div></div>`).join('');
+                Views.renderAuctionLog();
+            },
+            renderAuctionLog: () => {
+                const logContainer = document.getElementById('auction-log-container');
+                if (!logContainer) return;
+                logContainer.innerHTML = state.auctionLog.map(log => {
+                    const colorMap = { 'info': 'text-slate-400', 'bid': 'text-blue-400', 'sale': 'text-green-400', 'unsold': 'text-yellow-400', 'undo': 'text-orange-400', 'system': 'text-pink-400' };
+                    return `<div class="flex items-start gap-2 ${colorMap[log.type] || 'text-slate-400'}">
+                                <span class="font-mono text-xs">${log.timestamp}</span>
+                                <span>${log.message}</span>
+                            </div>`;
+                }).join('');
+            },
+            renderBiddingControls: () => {
+                DOMElements.biddingControls.innerHTML = state.teams.map(team => `<button data-team-id="${team.id}" class="bid-btn btn-primary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Bid for ${team.name}</button>`).join('');
+                document.querySelectorAll('.bid-btn').forEach(btn => btn.addEventListener('click', EventHandlers.handleBid));
+            }
+        };
+
+        // --- Event Handlers & Logic ---
+        const EventHandlers = {
+            init: () => {
+                Utils.loadState();
+                Views.landing();
+                DOMElements.mainMenuBtn.addEventListener('click', EventHandlers.showLandingPage);
+                DOMElements.closeRandomBidBtn.addEventListener('click', EventHandlers.closeRandomBidding);
+                DOMElements.undoBidBtn.addEventListener('click', EventHandlers.undoBid);
+                DOMElements.themeSwitcher.addEventListener('click', EventHandlers.toggleTheme);
+                DOMElements.modalCloseBtn.addEventListener('click', Utils.closeModal);
+                DOMElements.confirmModalCancelBtn.addEventListener('click', Utils.closeModal);
+                DOMElements.viewContainer.addEventListener('click', EventHandlers.delegateViewEvents);
+            },
+            delegateViewEvents: (e) => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                const { action, id } = target.dataset;
+                const numericId = parseInt(id);
+
+                switch (action) {
+                    case 'load-auction': EventHandlers.loadAuction(id, false); break;
+                    case 'delete-auction': EventHandlers.deleteAuction(id); break;
+                    case 'remove-setup-team':
+                        state.teams = state.teams.filter(t => t.id !== numericId);
+                        Views.renderSetupLists();
+                        Utils.saveState();
+                        break;
+                    case 'remove-setup-player':
+                        state.players = state.players.filter(p => p.id !== numericId);
+                        Views.renderSetupLists();
+                        Utils.saveState();
+                        break;
+                    case 'manual-bid': EventHandlers.showManualSaleForm(Utils.findPlayer(numericId)); break;
+                    case 'remove-player': EventHandlers.removePlayer(numericId); break;
+                    case 'make-available': EventHandlers.makePlayerAvailable(Utils.findPlayer(numericId)); break;
+                    case 'edit-purse': EventHandlers.showEditPurseForm(state.teams.find(t => t.id === numericId)); break;
+                    case 'download-roster': EventHandlers.downloadRoster(id); break;
+                }
+            },
+            showLandingPage: () => {
+                Views.landing();
+                DOMElements.mainMenuBtn.classList.add('hidden');
+                DOMElements.currentAuctionInfo.textContent = '';
+                state.currentAuctionId = null;
+            },
+            showNewAuctionForm: () => {
+                DOMElements.formModalTitle.textContent = 'Create New Auction';
+                DOMElements.formModalBody.innerHTML = `
+                    <form id="new-auction-form" class="space-y-4">
+                        <input type="text" id="new-auction-name" placeholder="Auction Name" class="w-full bg-slate-700 p-3 rounded-md border border-slate-600" required>
+                        <input type="text" id="new-auction-place" placeholder="Place" class="w-full bg-slate-700 p-3 rounded-md border border-slate-600" required>
+                        <input type="date" id="new-auction-date" class="w-full bg-slate-700 p-3 rounded-md border border-slate-600" required>
+                        <div class="flex justify-end space-x-4 mt-6">
+                            <button type="button" id="cancel-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md">Cancel</button>
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">Create</button>
+                        </div>
+                    </form>`;
+                DOMElements.formModal.classList.add('active');
+                document.getElementById('new-auction-form').addEventListener('submit', EventHandlers.createNewAuction);
+                document.getElementById('cancel-btn').addEventListener('click', Utils.closeModal);
+            },
+            createNewAuction: (e) => {
+                e.preventDefault();
+                const name = document.getElementById('new-auction-name').value;
+                const place = document.getElementById('new-auction-place').value;
+                const date = document.getElementById('new-auction-date').value;
+                if (!name || !place || !date) return;
+                state.currentAuctionId = Date.now().toString();
+                state.allAuctions[state.currentAuctionId] = { name, place, date, players: [], teams: [], availablePlayers: [], soldPlayers: [], unsoldPlayers: [], auctionLog: [] };
+                Utils.saveState();
+                EventHandlers.loadAuction(state.currentAuctionId, true);
+                Utils.closeModal();
+            },
+            deleteAuction: (id) => {
+                const auctionName = state.allAuctions[id]?.name || 'this auction';
+                Utils.showConfirm('Delete Auction', `Are you sure you want to delete "${auctionName}"? This action cannot be undone.`, () => {
+                    delete state.allAuctions[id];
+                    localStorage.setItem('crictionAuctions', JSON.stringify(state.allAuctions));
+                    Views.landing();
+                });
+            },
+            loadAuction: (id, isNew) => {
+                state.currentAuctionId = id;
+                const data = state.allAuctions[id];
+                Object.assign(state, { players: [], teams: [], availablePlayers: [], soldPlayers: [], unsoldPlayers: [], auctionLog: [], ...data });
+                DOMElements.mainMenuBtn.classList.remove('hidden');
+                DOMElements.currentAuctionInfo.textContent = `${data.name} | ${data.place} | ${data.date}`;
+                if (isNew || !data.players.length) {
+                    Views.setup();
+                } else {
+                    Views.auction();
+                }
+            },
+            addTeam: (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const name = form.querySelector('#team-name').value;
+                const purse = parseInt(form.querySelector('#team-purse').value);
+                const logoFile = form.querySelector('#team-logo-input').files[0];
+                if (!name || !purse) return;
+                const newTeam = { id: Date.now(), name, purse };
+                if (logoFile) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        newTeam.logo = event.target.result;
+                        state.teams.push(newTeam);
+                        Views.renderSetupLists();
+                        Utils.saveState();
+                    };
+                    reader.readAsDataURL(logoFile);
+                } else {
+                    newTeam.logo = `https://placehold.co/40x40/0f172a/ffffff?text=${name.substring(0,2).toUpperCase()}`;
+                    state.teams.push(newTeam);
+                    Views.renderSetupLists();
+                    Utils.saveState();
+                }
+                form.reset();
+            },
+            addPlayer: (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const name = form.querySelector('#player-name-input').value;
+                const specialty = form.querySelector('#player-specialty-input').value;
+                const isWicketkeeper = form.querySelector('#player-is-wicketkeeper-input').checked;
+                const isCaptain = form.querySelector('#player-is-captain-input').checked;
+                const basePrice = parseInt(form.querySelector('#player-base-price-input').value);
+                const photoFile = form.querySelector('#player-photo-input').files[0];
+                if (!name || !specialty || !basePrice) return;
+                const newPlayer = { id: Date.now(), name, specialty, isWicketkeeper, isCaptain, basePrice };
+                if (photoFile) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        newPlayer.photo = event.target.result;
+                        state.players.push(newPlayer);
+                        Views.renderSetupLists();
+                        Utils.saveState();
+                    };
+                    reader.readAsDataURL(photoFile);
+                } else {
+                    newPlayer.photo = `https://placehold.co/200x200/1e3a8a/ffffff?text=${name.split(' ').map(n=>n[0]).join('')}`;
+                    state.players.push(newPlayer);
+                    Views.renderSetupLists();
+                    Utils.saveState();
+                }
+                form.reset();
+            },
+            startAuction: () => {
+                Tone.start();
+                state.availablePlayers = [...state.players];
+                Utils.logEvent('Auction Started!', 'system');
+                Views.auction();
+                Utils.saveState();
+            },
+            initiateRandomBid: () => {
+                if (state.availablePlayers.length === 0) {
+                    Utils.showModal('No Players', 'There are no available players to bid on.');
+                    return;
+                }
+                const player = state.availablePlayers[Math.floor(Math.random() * state.availablePlayers.length)];
+                DOMElements.randomBiddingPage.classList.remove('hidden');
+                EventHandlers.startBiddingForPlayer(player);
+                Utils.logEvent(`Bidding started for ${player.name}. Base Price: ${player.basePrice} Pts.`, 'info');
+            },
+            closeRandomBidding: () => {
+                clearInterval(state.auctionTimer);
+                if (state.currentBiddingPlayer) {
+                     Utils.logEvent(`Bidding closed for ${state.currentBiddingPlayer.name}.`, 'system');
+                }
+                state.currentBiddingPlayer = null;
+                DOMElements.randomBiddingPage.classList.add('hidden');
+                DOMElements.soldBanner.classList.add('hidden');
+            },
+            startBiddingForPlayer: (player) => {
+                state.currentBiddingPlayer = player;
+                state.currentBid = player.basePrice;
+                state.highestBidder = null;
+
+                DOMElements.biddingPlayerCard.classList.remove('pop-in');
+                void DOMElements.biddingPlayerCard.offsetWidth;
+                DOMElements.biddingPlayerCard.classList.add('pop-in');
+
+                DOMElements.biddingPlayerName.textContent = player.name;
+                DOMElements.biddingPlayerPhoto.src = player.photo;
+                DOMElements.biddingPlayerSpecialty.textContent = `${player.specialty}${player.isWicketkeeper ? ' (WK)' : ''}${player.isCaptain ? ' (C)' : ''}`;
+                DOMElements.biddingPlayerBasePrice.textContent = `${player.basePrice} Pts`;
+                Views.renderBiddingControls();
+                EventHandlers.updateBiddingUI();
+                EventHandlers.startTimer();
+            },
+            handleBid: (e) => {
+                const teamId = parseInt(e.target.dataset.teamId);
+                const team = state.teams.find(t => t.id === teamId);
+                const newBid = state.currentBid + state.bidIncrement;
+                if (team.purse >= newBid) {
+                    state.currentBid = newBid;
+                    state.highestBidder = teamId;
+                    Sounds.bid.triggerAttackRelease("C4", "8n");
+                    Utils.logEvent(`${team.name} bid ${newBid} Pts for ${state.currentBiddingPlayer.name}.`, 'bid');
+                    EventHandlers.updateBiddingUI();
+                    EventHandlers.startTimer();
+                } else {
+                    Utils.showModal('Insufficient Funds!', `${team.name} does not have enough points.`);
+                }
+            },
+            undoBid: () => {
+                if (!state.highestBidder) return;
+                const oldBid = state.currentBid;
+                state.currentBid -= state.bidIncrement;
+                if (state.currentBid < state.currentBiddingPlayer.basePrice) {
+                    state.currentBid = state.currentBiddingPlayer.basePrice;
+                    state.highestBidder = null;
+                }
+                Utils.logEvent(`Last bid of ${oldBid} Pts was undone.`, 'undo');
+                EventHandlers.updateBiddingUI();
+                EventHandlers.startTimer();
+            },
+            updateBiddingUI: () => {
+                DOMElements.currentBidAmountEl.textContent = `${state.currentBid} Pts`;
+                DOMElements.currentBidAmountEl.classList.add('pop-in');
+                DOMElements.currentBidAmountEl.onanimationend = () => DOMElements.currentBidAmountEl.classList.remove('pop-in');
+                DOMElements.undoBidBtn.disabled = !state.highestBidder;
+                DOMElements.undoBidBtn.textContent = `-${state.bidIncrement}`;
+                if (state.highestBidder) {
+                    const team = state.teams.find(t => t.id === state.highestBidder);
+                    DOMElements.highestBidderInfoEl.innerHTML = `<img src="${team.logo}" alt="${team.name}" class="w-10 h-10 rounded-full object-cover"><span class="font-semibold">${team.name}</span>`;
+                } else {
+                    DOMElements.highestBidderInfoEl.innerHTML = '<span>Waiting for first bid...</span>';
+                }
+            },
+            startTimer: () => {
+                clearInterval(state.auctionTimer);
+                let timeLeft = state.timerDuration;
+                DOMElements.timerBar.style.transition = 'width 0.1s linear';
+                state.auctionTimer = setInterval(() => {
+                    timeLeft -= 0.1;
+                    const percentage = (timeLeft / state.timerDuration) * 100;
+                    DOMElements.timerBar.style.width = `${percentage}%`;
+                    DOMElements.timerText.textContent = `Time left: ${Math.ceil(timeLeft)}s`;
+                    
+                    if (timeLeft <= 5 && timeLeft > 0) {
+                        Sounds.timerTick.triggerAttackRelease("C6", "32n", Tone.now() + (5 - timeLeft));
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(state.auctionTimer);
+                        EventHandlers.sellBiddingPlayer();
+                    }
+                }, 100);
+            },
+            sellBiddingPlayer: () => {
+                Sounds.gavel.triggerAttackRelease("C2", "1n", Tone.now());
+                if (state.highestBidder) {
+                    const winningTeam = state.teams.find(t => t.id === state.highestBidder);
+                    EventHandlers.processSale(state.currentBiddingPlayer, winningTeam, state.currentBid);
+                    DOMElements.soldToTeamEl.textContent = `Sold to ${winningTeam.name}`;
+                    DOMElements.soldPriceEl.innerHTML = `${state.currentBid} Pts`;
+                    DOMElements.soldBanner.classList.remove('hidden');
+                    Utils.createConfetti();
+                } else {
+                    Utils.removePlayerFromList(state.availablePlayers, state.currentBiddingPlayer.id);
+                    if (!state.unsoldPlayers.find(p => p.id === state.currentBiddingPlayer.id)) {
+                        state.unsoldPlayers.push(state.currentBiddingPlayer);
+                    }
+                    Utils.logEvent(`${state.currentBiddingPlayer.name} went UNSOLD.`, 'unsold');
+                    DOMElements.soldToTeamEl.textContent = `${state.currentBiddingPlayer.name}`;
+                    DOMElements.soldPriceEl.innerHTML = `UNSOLD`;
+                    DOMElements.soldBanner.classList.remove('hidden');
+                }
+                setTimeout(() => {
+                    EventHandlers.closeRandomBidding();
+                    Views.renderAllLists();
+                }, 3000);
+            },
+            processSale: (player, team, price) => {
+                if (player.id === state.currentBiddingPlayer?.id) {
+                    state.currentBiddingPlayer = null;
+                }
+                const existingSaleIndex = state.soldPlayers.findIndex(s => s.id === player.id);
+                if (existingSaleIndex > -1) {
+                    const oldSale = state.soldPlayers[existingSaleIndex];
+                    const oldTeam = state.teams.find(t => t.id === oldSale.teamId);
+                    oldTeam.purse += oldSale.soldPrice;
+                }
+                team.purse -= price;
+                Utils.removePlayerFromList(state.availablePlayers, player.id);
+                Utils.removePlayerFromList(state.soldPlayers, player.id);
+                Utils.removePlayerFromList(state.unsoldPlayers, player.id);
+                state.soldPlayers.push({ ...player, soldPrice: price, teamId: team.id });
+                Utils.logEvent(`${player.name} sold to ${team.name} for ${price} Pts.`, 'sale');
+                
+                Sounds.sold.triggerAttackRelease("G5", "8n");
+
+                Views.renderAllLists();
+                Utils.saveState();
+            },
+            makePlayerAvailable: (player) => {
+                const saleIndex = state.soldPlayers.findIndex(s => s.id === player.id);
+                if (saleIndex > -1) {
+                    const oldSale = state.soldPlayers[saleIndex];
+                    const oldTeam = state.teams.find(t => t.id === oldSale.teamId);
+                    oldTeam.purse += oldSale.soldPrice;
+                    Utils.logEvent(`Sale of ${player.name} to ${oldTeam.name} for ${oldSale.soldPrice} Pts was undone.`, 'undo');
+                }
+                Utils.removePlayerFromList(state.soldPlayers, player.id);
+                Utils.removePlayerFromList(state.unsoldPlayers, player.id);
+                if (!state.availablePlayers.find(p => p.id === player.id)) {
+                    state.availablePlayers.push(player);
+                }
+                Views.renderAllLists();
+                Utils.saveState();
+                Utils.showModal('Player Available', `${player.name} is now in the Available Players list.`);
+            },
+            removePlayer: (playerId) => {
+                const player = Utils.findPlayer(playerId);
+                if (!player) return;
+                Utils.showConfirm('Remove Player', `Are you sure you want to permanently remove ${player.name} from the auction?`, () => {
+                    state.players = state.players.filter(p => p.id !== playerId);
+                    state.availablePlayers = state.availablePlayers.filter(p => p.id !== playerId);
+                    Views.renderAllLists();
+                    Utils.saveState();
+                    Utils.logEvent(`${player.name} was removed from the auction.`, 'system');
+                    Utils.showModal('Player Removed', `${player.name} has been removed from the auction.`);
+                });
+            },
+            liveAddPlayer: (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const name = form.querySelector('#live-player-name').value;
+                const specialty = form.querySelector('#live-player-specialty').value;
+                const isWicketkeeper = form.querySelector('#live-player-is-wicketkeeper').checked;
+                const isCaptain = form.querySelector('#live-player-is-captain').checked;
+                const basePrice = parseInt(form.querySelector('#live-player-base-price').value);
+                if (!name || !specialty || !basePrice) return;
+                const newPlayer = { id: Date.now(), name, specialty, isWicketkeeper, isCaptain, basePrice, photo: `https://placehold.co/200x200/1e3a8a/ffffff?text=${name.split(' ').map(n=>n[0]).join('')}` };
+                state.players.push(newPlayer);
+                state.availablePlayers.push(newPlayer);
+                Views.renderAllLists();
+                Utils.saveState();
+                Utils.logEvent(`${newPlayer.name} was added to the auction.`, 'system');
+                Utils.showModal('Player Added', `${newPlayer.name} is now available for bidding.`);
+                form.reset();
+            },
+            showEditPurseForm: (team) => {
+                if (!team) return;
+                state.teamForPurseEdit = team;
+                DOMElements.formModalTitle.textContent = 'Edit Purse';
+                DOMElements.formModalBody.innerHTML = `
+                    <p class="text-lg font-semibold mb-4">${team.name}</p>
+                    <form id="edit-purse-form">
+                        <input type="number" id="edit-purse-input" value="${team.purse}" class="w-full bg-slate-700 p-3 rounded-md border border-slate-600" placeholder="Enter new points total">
+                        <div class="flex justify-end space-x-4 mt-6">
+                            <button type="button" id="cancel-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md">Cancel</button>
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">Confirm</button>
+                        </div>
+                    </form>`;
+                DOMElements.formModal.classList.add('active');
+                document.getElementById('edit-purse-form').addEventListener('submit', EventHandlers.confirmEditPurse);
+                document.getElementById('cancel-btn').addEventListener('click', Utils.closeModal);
+            },
+            confirmEditPurse: (e) => {
+                e.preventDefault();
+                const newPurse = parseInt(document.getElementById('edit-purse-input').value);
+                if (state.teamForPurseEdit && !isNaN(newPurse) && newPurse >= 0) {
+                    Utils.logEvent(`${state.teamForPurseEdit.name}'s purse changed from ${state.teamForPurseEdit.purse} to ${newPurse}.`, 'system');
+                    state.teamForPurseEdit.purse = newPurse;
+                    Views.renderAllLists();
+                    Utils.saveState();
+                    Utils.closeModal();
+                } else {
+                    Utils.showModal('Invalid Input', 'Please enter a valid, non-negative number for the purse.');
+                }
+            },
+            showManualSaleForm: (player) => {
+                if (!player) return;
+                state.playerForManualSale = player;
+                DOMElements.formModalTitle.textContent = 'Manual Bidding';
+                DOMElements.formModalBody.innerHTML = `
+                    <div class="mb-4">
+                        <p class="text-lg font-semibold">${player.name}</p>
+                        <p class="text-sm text-slate-400">${player.specialty}${player.isWicketkeeper ? ' (WK)' : ''}${player.isCaptain ? ' (C)' : ''} - Base: ${player.basePrice} Pts</p>
+                    </div>
+                    <form id="manual-sale-form" class="space-y-4">
+                        <select id="manual-sale-team-select" class="w-full bg-slate-700 p-3 rounded-md border border-slate-600">
+                            ${state.teams.map(t => `<option value="${t.id}">${t.name} (${t.purse} Pts)</option>`).join('')}
+                        </select>
+                        <input type="number" id="manual-sale-price-input" class="w-full bg-slate-700 p-3 rounded-md border border-slate-600" placeholder="Enter sale price">
+                        <div class="flex justify-end space-x-4 mt-6">
+                            <button type="button" id="cancel-btn" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md">Cancel</button>
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">Confirm Sale</button>
+                        </div>
+                    </form>`;
+                DOMElements.formModal.classList.add('active');
+                document.getElementById('manual-sale-form').addEventListener('submit', EventHandlers.confirmManualSale);
+                document.getElementById('cancel-btn').addEventListener('click', Utils.closeModal);
+            },
+            confirmManualSale: (e) => {
+                e.preventDefault();
+                const teamId = parseInt(document.getElementById('manual-sale-team-select').value);
+                const price = parseInt(document.getElementById('manual-sale-price-input').value);
+                const team = state.teams.find(t => t.id === teamId);
+                if (!price || price <= 0) { Utils.showModal('Invalid Price', 'Please enter a valid sale price.'); return; }
+                if (team.purse < price) { Utils.showModal('Insufficient Funds', `${team.name} does not have enough points.`); return; }
+                EventHandlers.processSale(state.playerForManualSale, team, price);
+                Utils.closeModal();
+                Utils.showModal('Sale Successful', `${state.playerForManualSale.name} sold to ${team.name} for ${price} Pts.`);
+            },
+            bidIncrementChange: (e) => {
+                const newValue = parseInt(e.target.value);
+                if (!isNaN(newValue) && newValue > 0) {
+                    state.bidIncrement = newValue;
+                    Utils.logEvent(`Bid increment changed to ${newValue}.`, 'system');
+                    Utils.showModal('Success', `Bid increment is now set to ${state.bidIncrement} points.`);
+                } else {
+                    e.target.value = state.bidIncrement;
+                    Utils.showModal('Invalid Value', 'Please enter a positive number for the bid increment.');
+                }
+            },
+            toggleTheme: () => {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.className = state.theme;
+                DOMElements.themeIconLight.classList.toggle('hidden');
+                DOMElements.themeIconDark.classList.toggle('hidden');
+                localStorage.setItem('crictionTheme', state.theme);
+            },
+            filterPlayers: (e) => {
+                const searchTerm = e.target.value;
+                Views.renderAllLists(searchTerm);
+            },
+            downloadRoster: (teamId) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const team = state.teams.find(t => t.id == teamId);
+                const teamPlayers = state.soldPlayers.filter(p => p.teamId == teamId);
+
+                if (team.logo) {
+                    try { doc.addImage(team.logo, 'PNG', 170, 8, 25, 25); } catch (e) { console.error("Error adding logo:", e); }
+                }
+
+                doc.setFontSize(22);
+                doc.text(`${team.name} - Roster`, 20, 20);
+                doc.setFontSize(12);
+                doc.text(`Remaining Purse: ${team.purse} Points`, 20, 30);
+
+                if (teamPlayers.length > 0) {
+                    const tableData = teamPlayers.map(p => [`${p.name}`, `${p.specialty}${p.isWicketkeeper ? ' (WK)' : ''}${p.isCaptain ? ' (C)' : ''}`, `${p.soldPrice} Pts`]);
+                    doc.autoTable({
+                        head: [['Player Name', 'Specialty', 'Sold Price']],
+                        body: tableData,
+                        startY: 40,
+                        theme: 'grid'
+                    });
+                } else {
+                    doc.text("No players bought yet.", 20, 50);
+                }
+                
+                const pageHeight = doc.internal.pageSize.getHeight();
+                doc.setFontSize(10);
+                doc.setTextColor(150);
+                doc.text('DEVELOPED BY MANGAN', doc.internal.pageSize.getWidth() / 2, pageHeight - 10, { align: 'center' });
+
+                doc.save(`roster-${team.name.toLowerCase().replace(/\s/g, '-')}.pdf`);
+            }
+        };
+
+        return {
+            init: EventHandlers.init
+        };
+    })();
+
+    document.addEventListener('DOMContentLoaded', App.init);
     </script>
 </body>
 </html>
