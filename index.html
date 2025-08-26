@@ -36,7 +36,7 @@
     // ===== CONFIG: set your password here, but as a SHA-256 hash (not plaintext) =====
     // Plain password you’ll share with paid users (example):   eleague#2025
     // Its SHA-256 hex (use any online SHA-256 generator):      6a6c3b0a4b0f0b0e...<replace>
-    const PASSWORD_HASH_HEX = "9b5eab5e39de09883ce2ccbdbd813fabad688274c09ba33ea6c7a401893a959e";
+    const PASSWORD_HASH_HEX = 9b5eab5e39de09883ce2ccbdbd813fabad688274c09ba33ea6c7a401893a959e;
 
     // Small helper: hex -> Uint8Array
     function hexToBytes(hex){const a=[];for(let c=0;c<hex.length;c+=2)a.push(parseInt(hex.substr(c,2),16));return new Uint8Array(a);}
@@ -83,3 +83,4 @@
   </script>
 </body>
 </html>
+
