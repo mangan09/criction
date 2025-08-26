@@ -1,86 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Criction – Secure Access</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criction - Secure Access</title>
   <style>
-    body{margin:0;font-family:Arial,system-ui;background:#f5f7fa;color:#333;text-align:center}
-    header{background:linear-gradient(135deg,#007BFF,#00c6ff);color:#fff;padding:56px 20px}
-    header h1{margin:0;font-size:2.6rem}
-    header p{opacity:.95;margin-top:8px}
-    main{padding:40px 20px}
-    input{padding:12px 14px;font-size:16px;border:1px solid #cbd5e1;border-radius:8px;width:260px}
-    button{padding:12px 20px;font-size:16px;border:0;border-radius:8px;background:#007BFF;color:#fff;cursor:pointer}
-    button:hover{background:#0056b3}
-    footer{margin-top:56px;background:#111827;color:#cbd5e1;padding:14px;font-size:14px}
-    .hint{font-size:13px;color:#666;margin-top:10px}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      text-align: center;
+    }
+    header {
+      background: linear-gradient(135deg, #007BFF, #00c6ff);
+      color: white;
+      padding: 50px 20px;
+    }
+    header h1 {
+      font-size: 3em;
+      margin: 0;
+    }
+    header p {
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+    main {
+      padding: 40px 20px;
+    }
+    main h2 {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    input[type="password"] {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 250px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 12px 24px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: #0056b3;
+      transform: scale(1.05);
+    }
+    footer {
+      margin-top: 50px;
+      padding: 15px;
+      background: #222;
+      color: #ccc;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
+  <!-- Banner -->
   <header>
     <h1>⚡ Criction</h1>
-    <p>Enter your access code to continue</p>
+    <p>The hassle-free way to run your cricket auction</p>
   </header>
 
+  <!-- Main Content -->
   <main>
-    <input id="pass" type="password" placeholder="Access code" />
-    <br/><br/>
-    <button id="unlock">Unlock Auction</button>
-    <div class="hint">Having trouble? Contact admin for access.</div>
+    <h2>🔒 Secure Access</h2>
+    <p>Please enter your access code (provided after payment):</p>
+
+    <input type="password" id="pass" placeholder="Enter Password">
+    <br>
+    <button onclick="checkPassword()">Unlock Auction</button>
   </main>
 
-  <footer>Made with ❤️ by <strong>Mangan Ray</strong></footer>
+  <!-- Footer -->
+  <footer>
+    Made with ❤️ by <strong>Mangan Ray</strong>
+  </footer>
 
   <script>
-    // ===== CONFIG: set your password here, but as a SHA-256 hash (not plaintext) =====
-    // Plain password you’ll share with paid users (example):   eleague#2025
-    // Its SHA-256 hex (use any online SHA-256 generator):      6a6c3b0a4b0f0b0e...<replace>
-    const PASSWORD_HASH_HEX = 9b5eab5e39de09883ce2ccbdbd813fabad688274c09ba33ea6c7a401893a959e;
+    function checkPassword() {
+      const password = document.getElementById("pass").value;
+      const correctPassword = "python1234"; // 👉 Change this password!
 
-    // Small helper: hex -> Uint8Array
-    function hexToBytes(hex){const a=[];for(let c=0;c<hex.length;c+=2)a.push(parseInt(hex.substr(c,2),16));return new Uint8Array(a);}
-
-    async function sha256Hex(str){
-      const data = new TextEncoder().encode(str);
-      const hash = await crypto.subtle.digest("SHA-256", data);
-      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
-    }
-
-    // Create a short-lived token (simple)
-    function issueToken(){
-      const token = crypto.getRandomValues(new Uint8Array(16)).join("-");
-      const expiry = Date.now() + 60*60*1000; // valid 1 hour
-      localStorage.setItem("criction_auth_token", token);
-      localStorage.setItem("criction_auth_exp", String(expiry));
-      return token;
-    }
-
-    document.getElementById("unlock").addEventListener("click", async () => {
-      const input = document.getElementById("pass").value.trim();
-      if(!input){ alert("Enter your access code."); return; }
-
-      const inputHash = await sha256Hex(input);
-      if (inputHash.toLowerCase() === PASSWORD_HASH_HEX.toLowerCase()){
-        issueToken();
+      if (password === correctPassword) {
+        // Save flag in localStorage
+        localStorage.setItem("authenticated", "true");
+        // Redirect to auction page
         window.location.href = "crictionbymangan.html";
       } else {
-        alert("❌ Wrong code. Contact admin.");
+        alert("❌ Wrong password. Contact admin for access.");
       }
-    });
-
-    // Optional: if already authenticated and not expired, auto-continue
-    (function autoContinue(){
-      const exp = Number(localStorage.getItem("criction_auth_exp") || 0);
-      if (exp > Date.now()){
-        // already logged in
-        // window.location.href = "crictionbymangan.html";
-      } else {
-        localStorage.removeItem("criction_auth_token");
-        localStorage.removeItem("criction_auth_exp");
-      }
-    })();
+    }
   </script>
 </body>
 </html>
-
